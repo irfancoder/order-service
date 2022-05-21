@@ -1,0 +1,14 @@
+{
+	"folders": [
+        {
+            "path": "."
+        },
+        {
+            "path": "../setel-frontend"
+        },
+        {
+            "path": "../payment-service"
+        }
+    ],
+    "settings": {}
+}

@@ -2,9 +2,9 @@
 CREATE DATABASE IF NOT EXISTS order_db;
 
 -- create the users for each database
-CREATE USER 'admin'@'%' IDENTIFIED BY 'admin';
+CREATE USER IF NOT EXISTS 'admin'@'%' IDENTIFIED BY 'admin';
 -- CREATE USER 'mysql.infoschema'@'localhost' IDENTIFIED BY 'password';
-CREATE USER 'orderdb'@'%' IDENTIFIED BY 'orderdb';
+CREATE USER IF NOT EXISTS 'orderdb'@'%' IDENTIFIED BY 'orderdb';
 
 -- grant roles / privileges
 GRANT ALL PRIVILEGES ON *.* TO 'admin'@'%' WITH GRANT OPTION;
