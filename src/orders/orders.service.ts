@@ -1,15 +1,24 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { CreateOrderDto } from './dto'
+import { UserProvider } from 'src/users/users.provider'
+import { User } from '@prisma/client'
 
 @Injectable()
 export class OrdersService {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private readonly userProvider: UserProvider,
+        private prisma: PrismaService
+    ) {}
+
+    private get user(): User {
+        return this.userProvider.user
+    }
 
     async create(order: CreateOrderDto) {
         const createdOrder = await this.prisma.order.create({
             data: {
-                userId: order.userId,
+                userId: this.user.id,
                 products: {
                     connect: order.productsId.map((id) => {
                         return { id: id }
@@ -24,8 +33,9 @@ export class OrdersService {
         }
     }
 
-    findAll() {
-        return `This action returns all orders`
+    async findAll() {
+        console.log(this.user)
+        return await this.prisma.product.findMany()
     }
 
     findOne(id: number) {
