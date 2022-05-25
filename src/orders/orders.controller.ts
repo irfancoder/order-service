@@ -32,6 +32,7 @@ export class OrdersController {
         return this.ordersService.findOne(+id)
     }
 
+    @UseGuards(JwtGuard)
     @Delete(':id')
     remove(@Param('id') id: string) {
         return this.ordersService.remove(+id)

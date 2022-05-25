@@ -44,11 +44,15 @@ export class OrdersService {
         })
     }
 
-    findOne(id: number) {
-        return `This action returns a #${id} order`
+    async remove(id: number) {
+        return await this.prisma.order.delete({
+            where: {
+                id: id
+            }
+        })
     }
 
-    remove(id: number) {
-        return `This action removes a #${id} order`
+    findOne(id: number) {
+        return `This action returns a #${id} order`
     }
 }
