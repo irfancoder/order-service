@@ -1,14 +1,21 @@
-import { Injectable } from '@nestjs/common'
+import {
+    BadRequestException,
+    ForbiddenException,
+    Inject,
+    Injectable
+} from '@nestjs/common'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { CreateOrderDto } from './dto'
 import { UserProvider } from 'src/users/users.provider'
-import { User } from '@prisma/client'
+import { User, Order, Product, PaymentStatus } from '@prisma/client'
+import { ClientProxy } from '@nestjs/microservices'
 
 @Injectable()
 export class OrdersService {
     constructor(
         private readonly userProvider: UserProvider,
-        private prisma: PrismaService
+        private prisma: PrismaService,
+        @Inject('PAYMENT') private readonly paymentClient: ClientProxy
     ) {}
 
     private get user(): User {
@@ -24,13 +31,29 @@ export class OrdersService {
                         return { id: id }
                     })
                 }
+            },
+            include: {
+                products: true
             }
         })
+
+        this.paymentClient.emit<Order>('payment:create', createdOrder)
 
         return {
             order: createdOrder,
             text: `Successfully created the order. Order ID#${createdOrder.id} `
         }
+    }
+
+    async update(order: Order) {
+        await this.prisma.order.update({
+            where: {
+                id: order.id
+            },
+            data: {
+                status: order.status
+            }
+        })
     }
 
     async findAll() {
@@ -40,19 +63,65 @@ export class OrdersService {
             },
             include: {
                 products: true
+            },
+            orderBy: {
+                createdAt: 'desc'
             }
         })
     }
 
-    async remove(id: number) {
-        return await this.prisma.order.delete({
+    async cancelOrder(id: number) {
+        const updatedOrders = this.prisma.order
+            .update({
+                where: {
+                    id: id
+                },
+                data: {
+                    status: PaymentStatus.CANCELLED
+                }
+            })
+            .then(async () => {
+                return await this.prisma.order.findMany({
+                    where: {
+                        userId: this.user.id
+                    },
+                    include: {
+                        products: true
+                    },
+                    orderBy: {
+                        createdAt: 'desc'
+                    }
+                })
+            })
+            .catch((error) => {
+                throw new BadRequestException(error)
+            })
+
+        return updatedOrders
+    }
+
+    async clearAll() {
+        await this.prisma.order.deleteMany({
             where: {
-                id: id
+                userId: this.user.id
             }
         })
+        return this.findAll()
     }
 
-    findOne(id: number) {
-        return `This action returns a #${id} order`
+    async makePayment(id: number) {
+        const order = await this.prisma.order.findUnique({
+            where: {
+                id
+            },
+            include: {
+                products: true
+            }
+        })
+        if (!order) throw new ForbiddenException('Invalid order for payment')
+        if (order.status !== 'CREATED')
+            throw new ForbiddenException('Invalid order for payment')
+
+        return this.paymentClient.emit<Order>('payment:create', order)
     }
 }

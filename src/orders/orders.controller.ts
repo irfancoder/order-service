@@ -5,11 +5,13 @@ import {
     Body,
     Param,
     Delete,
-    UseGuards
+    UseGuards,
+    Inject
 } from '@nestjs/common'
 import { OrdersService } from './orders.service'
 import { CreateOrderDto } from './dto'
 import { JwtGuard } from 'src/auth/guard'
+import { EventPattern } from '@nestjs/microservices'
 
 @Controller('orders')
 export class OrdersController {
@@ -27,14 +29,27 @@ export class OrdersController {
         return this.ordersService.findAll()
     }
 
-    @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.ordersService.findOne(+id)
+    @UseGuards(JwtGuard)
+    @Post(':id')
+    cancelOrder(@Param('id') id: string) {
+        return this.ordersService.cancelOrder(+id)
     }
 
     @UseGuards(JwtGuard)
-    @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.ordersService.remove(+id)
+    @Delete('clear')
+    clearAllOrders() {
+        return this.ordersService.clearAll()
+    }
+
+    @UseGuards(JwtGuard)
+    @Post('pay/:id')
+    async makePayment(@Param('id') id: string) {
+        return this.ordersService.makePayment(+id)
+    }
+
+    /** Microservice Event Hooks */
+    @EventPattern('payment:created')
+    paymentCreated(@Body() result: any) {
+        this.ordersService.update(result)
     }
 }
