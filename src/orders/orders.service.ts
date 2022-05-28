@@ -109,19 +109,20 @@ export class OrdersService {
         return this.findAll()
     }
 
-    async makePayment(id: number) {
-        const order = await this.prisma.order.findUnique({
-            where: {
-                id
-            },
-            include: {
-                products: true
-            }
-        })
-        if (!order) throw new ForbiddenException('Invalid order for payment')
-        if (order.status !== 'CREATED')
-            throw new ForbiddenException('Invalid order for payment')
+    /** Wrong requirement */
+    // async makePayment(id: number) {
+    //     const order = await this.prisma.order.findUnique({
+    //         where: {
+    //             id
+    //         },
+    //         include: {
+    //             products: true
+    //         }
+    //     })
+    //     if (!order) throw new ForbiddenException('Invalid order for payment')
+    //     if (order.status !== 'CREATED')
+    //         throw new ForbiddenException('Invalid order for payment')
 
-        return this.paymentClient.emit<Order>('payment:create', order)
-    }
+    //     return this.paymentClient.emit<Order>('payment:create', order)
+    // }
 }

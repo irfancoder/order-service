@@ -5,8 +5,7 @@ import {
     Body,
     Param,
     Delete,
-    UseGuards,
-    Inject
+    UseGuards
 } from '@nestjs/common'
 import { OrdersService } from './orders.service'
 import { CreateOrderDto } from './dto'
@@ -41,14 +40,14 @@ export class OrdersController {
         return this.ordersService.clearAll()
     }
 
-    @UseGuards(JwtGuard)
-    @Post('pay/:id')
-    async makePayment(@Param('id') id: string) {
-        return this.ordersService.makePayment(+id)
-    }
+    // @UseGuards(JwtGuard)
+    // @Post('pay/:id')
+    // makePayment(@Param('id') id: string) {
+    //     return this.ordersService.makePayment(+id)
+    // }
 
     /** Microservice Event Hooks */
-    @EventPattern('payment:created')
+    @EventPattern('order:updated')
     paymentCreated(@Body() result: any) {
         this.ordersService.update(result)
     }
